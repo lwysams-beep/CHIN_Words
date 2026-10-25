@@ -159,3 +159,39 @@
     max-width: 100px;
   }
 }
+
+
+/* 確保詞語大字清楚顯示 */
+.reading-card .word {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 180px;
+  font-size: clamp(72px, 10vw, 120px) !important;
+  font-weight: 900;
+  line-height: 1.4;
+  color: #222222;
+  text-align: center;
+  visibility: visible;
+  opacity: 1;
+  overflow-wrap: anywhere;
+}
+
+/* 確保左右版面正常排列 */
+.game-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 20px;
+  align-items: start;
+}
+
+.reading-card {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+}
