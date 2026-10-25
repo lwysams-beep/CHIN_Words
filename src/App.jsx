@@ -260,22 +260,22 @@ export default function App() {
 
       if (outcome === 'permission-error') return;
 
-      if (outcome === 'correct') {
-        speakFeedback(feedbackRef.current, () => {
-          if (pausedRef.current) return;
+      
+if (outcome === 'correct') {
+  speakFeedback(feedbackRef.current, () => {
+    if (pausedRef.current) return;
 
-          const nextIndex = (indexRef.current + 1) % words.length;
-          indexRef.current = nextIndex;
-          setIndex(nextIndex);
-          setRecognized('');
-          setResult('');
-          setMessage('準備下一題……');
+    const nextIndex = (indexRef.current + 1) % words.length;
+    indexRef.current = nextIndex;
+    setIndex(nextIndex);
+    setRecognized('');
+    setResult('');
+    setMessage('請按「重聽讀音」聆聽新詞語。');
+  });
+}
 
-          timerRef.current = window.setTimeout(() => {
-            speakWordAndRecord(words[nextIndex]);
-          }, 300);
-        });
-      } else if (outcome === 'wrong' || outcome === 'retry') {
+      
+      else if (outcome === 'wrong' || outcome === 'retry') {
         const feedback =
           outcome === 'wrong'
             ? feedbackRef.current
