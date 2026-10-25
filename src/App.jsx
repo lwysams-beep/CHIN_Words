@@ -310,17 +310,48 @@ if (outcome === 'correct') {
     speakWordAndRecord(words[indexRef.current]);
   }
 
-  function replayWord() {
-    if (!startedRef.current || pausedRef.current) return;
+  
+function replayWord() {
+  if (!startedRef.current || pausedRef.current) return;
 
-    outcomeRef.current = '';
-    recognitionRef.current?.abort();
-    setListening(false);
+  clearTimer();
+  outcomeRef.current = '';
+  window.speechSynthesis?.cancel();
+
+  const recognition = recognitionRef.current;
+
+  function playCurrentWord() {
+    if (pausedRef.current || !startedRef.current) return;
+
+    setMessage('準備播放詞語……');
 
     timerRef.current = window.setTimeout(() => {
+      if (pausedRef.current || !startedRef.current) return;
+
       speakWordAndRecord(words[indexRef.current]);
-    }, 200);
+    }, 250);
   }
+
+  if (recognition && listening) {
+    try {
+      recognition.stop();
+
+      setMessage('準備重聽詞語……');
+
+      // 等待錄音真正停止，再播放讀音
+      recognition.onend = () => {
+        setListening(false);
+        playCurrentWord();
+      };
+    } catch {
+      setListening(false);
+      playCurrentWord();
+    }
+  } else {
+    playCurrentWord();
+  }
+}
+
 
   function togglePause() {
     if (!startedRef.current) return;
