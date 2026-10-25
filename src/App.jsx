@@ -15,6 +15,8 @@ const words = [
   '快樂',
 ];
 
+const praises = ['答啱喇！', '正確！', '啱咗！'];
+
 function cleanText(text) {
   return text.replace(/[\s，。！？、,.!?；;：:「」『』]/g, '');
 }
@@ -22,12 +24,13 @@ function cleanText(text) {
 export default function App() {
   const [index, setIndex] = useState(0);
   const [stars, setStars] = useState(0);
-  const [message, setMessage] = useState('請先聽讀音，再自己讀一次。');
+  const [message, setMessage] = useState('準備錄音……');
   const [recognized, setRecognized] = useState('');
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(true);
   const [result, setResult] = useState('');
   const [celebrate, setCelebrate] = useState(false);
+
   const recognitionRef = useRef(null);
   const awardedRef = useRef(new Set());
 
@@ -39,6 +42,7 @@ export default function App() {
 
     if (!SpeechRecognition) {
       setSupported(false);
+      setMessage('這個瀏覽器不支援語音識別，請嘗試使用桌面版 Chrome。');
       return;
     }
 
@@ -52,54 +56,55 @@ export default function App() {
       setListening(true);
       setRecognized('');
       setResult('');
-      setMessage('正在聆聽，請清楚讀出詞語……');
+      setMessage('🔴 正在錄音，請清楚讀出詞語……');
     };
 
-    
-recognition.onresult = (event) => {
-  const alternatives = Array.from(event.results[0])
-    .map((item) => cleanText(item.transcript));
+    recognition.onresult = (event) => {
+      const alternatives = Array.from(event.results[0]).map((item) =>
+        cleanText(item.transcript)
+      );
 
-  const answer = alternatives[0] || '';
-  setRecognized(event.results[0][0].transcript);
+      setRecognized(event.results[0][0].transcript);
 
-  const matched = alternatives.some(
-    (text) => text === cleanText(currentWord)
-  );
+      const matched = alternatives.some(
+        (text) => text === cleanText(currentWord)
+      );
 
-  if (matched) {
-    setResult('correct');
-    setMessage('🎉 答啱喇！正確！啱咗！');
-    setCelebrate(true);
+      if (matched) {
+        const praise =
+          praises[Math.floor(Math.random() * praises.length)];
 
-    window.setTimeout(() => {
-      setCelebrate(false);
-    }, 3000);
+        setResult('correct');
+        setMessage(`🎉 ${praise}`);
+        setCelebrate(true);
 
-    speakFeedback('答啱喇！正確！啱咗！');
+        window.setTimeout(() => {
+          setCelebrate(false);
+        }, 3000);
 
-    const key = `${index}`;
+        speakFeedback(praise);
 
-    if (!awardedRef.current.has(key)) {
-      awardedRef.current.add(key);
-      setStars((value) => value + 1);
-    }
-  } else {
-    setResult('retry');
-    setMessage('唔緊要！再試多次，你一定得！');
-    setCelebrate(false);
+        const key = `${index}`;
 
-    speakFeedback('錯咗但唔緊要，再試多次！');
-  }
-};
+        if (!awardedRef.current.has(key)) {
+          awardedRef.current.add(key);
+          setStars((value) => value + 1);
+        }
+      } else {
+        setResult('retry');
+        setMessage('唔緊要！再試多次，你一定得！');
+        setCelebrate(false);
 
+        speakFeedback('錯咗但唔緊要，再試多次！');
+      }
+    };
 
     recognition.onerror = (event) => {
       if (event.error === 'not-allowed') {
-        setMessage('請在瀏覽器設定中允許使用麥克風。');
+        setMessage('請允許瀏覽器使用麥克風，然後重新開始。');
       } else if (event.error === 'no-speech') {
-        setMessage('未聽到聲音，請再按一次錄音。');
-      } else {
+        setMessage('未聽到聲音，請按「下一個詞語」再試。');
+      } else if (event.error !== 'aborted') {
         setMessage(`語音辨識未能完成（${event.error}），請再試一次。`);
       }
     };
@@ -110,36 +115,46 @@ recognition.onresult = (event) => {
 
     recognitionRef.current = recognition;
 
+    // 每次進入詞語畫面，自動開始錄音
+    const autoStartTimer = window.setTimeout(() => {
+      try {
+        recognition.start();
+      } catch {
+        setMessage('未能自動開始錄音，請按「下一個詞語」再試。');
+      }
+    }, 400);
+
     return () => {
+      window.clearTimeout(autoStartTimer);
       recognition.abort();
-      recognitionRef.current = null;
+
+      if (recognitionRef.current === recognition) {
+        recognitionRef.current = null;
+      }
     };
   }, [currentWord, index]);
 
-  
-function speakFeedback(text) {
-  if (!('speechSynthesis' in window)) return;
+  function speakFeedback(text) {
+    if (!('speechSynthesis' in window)) return;
 
-  window.speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'zh-HK';
-  utterance.rate = 0.9;
-  utterance.pitch = 1.15;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-HK';
+    utterance.rate = 0.9;
+    utterance.pitch = 1.15;
 
-  const voices = window.speechSynthesis.getVoices();
-  const cantoneseVoice = voices.find(
-    (voice) => voice.lang.toLowerCase() === 'zh-hk'
-  );
+    const voices = window.speechSynthesis.getVoices();
+    const cantoneseVoice = voices.find(
+      (voice) => voice.lang.toLowerCase() === 'zh-hk'
+    );
 
-  if (cantoneseVoice) {
-    utterance.voice = cantoneseVoice;
+    if (cantoneseVoice) {
+      utterance.voice = cantoneseVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
   }
-
-  window.speechSynthesis.speak(utterance);
-}
-
-
 
   function speakWord() {
     if (!('speechSynthesis' in window)) {
@@ -148,6 +163,7 @@ function speakFeedback(text) {
     }
 
     window.speechSynthesis.cancel();
+
     const utterance = new SpeechSynthesisUtterance(currentWord);
     utterance.lang = 'zh-HK';
     utterance.rate = 0.75;
@@ -157,65 +173,58 @@ function speakFeedback(text) {
       (voice) => voice.lang.toLowerCase() === 'zh-hk'
     );
 
-    if (cantoneseVoice) utterance.voice = cantoneseVoice;
-
-    utterance.onstart = () => setMessage('請仔細聆聽標準讀音。');
-    utterance.onend = () => setMessage('輪到你了！按「開始錄音」讀一次。');
-    utterance.onerror = () => setMessage('語音播放未能完成，請再試一次。');
+    if (cantoneseVoice) {
+      utterance.voice = cantoneseVoice;
+    }
 
     window.speechSynthesis.speak(utterance);
   }
 
-  function startRecording() {
-    if (!supported || !recognitionRef.current) {
-      setMessage('目前瀏覽器不支援語音識別，請改用支援的瀏覽器。');
-      return;
-    }
-
-    try {
-      setRecognized('');
-      setResult('');
-      recognitionRef.current.start();
-    } catch {
-      setMessage('語音功能正在準備，請稍候再按一次。');
+  function stopRecording() {
+    if (listening && recognitionRef.current) {
+      recognitionRef.current.stop();
     }
   }
 
   function nextWord() {
-    if (listening) recognitionRef.current?.stop();
-
-    setIndex((value) => (value + 1) % words.length);
+    recognitionRef.current?.abort();
+    setListening(false);
     setRecognized('');
     setResult('');
-    setMessage('請先聽讀音，再自己讀一次。');
+    setCelebrate(false);
+    setMessage('準備錄音……');
+
+    window.speechSynthesis?.cancel();
+
+    setIndex((value) => (value + 1) % words.length);
   }
 
   return (
     <main className="app">
-      
-{celebrate && (
-  <div className="confetti-layer" aria-hidden="true">
-    {Array.from({ length: 70 }, (_, i) => (
-      <span
-        className="confetti"
-        key={i}
-        style={{
-          left: `${(i * 37) % 100}%`,
-          animationDelay: `${(i % 10) * 0.08}s`,
-          animationDuration: `${1.8 + (i % 8) * 0.2}s`,
-          '--drift': `${((i * 17) % 160) - 80}px`,
-          '--spin': `${360 + (i % 5) * 360}deg`,
-        }}
-      />
-    ))}
-  </div>
-)}
+      {celebrate && (
+        <div className="confetti-layer" aria-hidden="true">
+          {Array.from({ length: 70 }, (_, i) => (
+            <span
+              className="confetti"
+              key={i}
+              style={{
+                left: `${(i * 37) % 100}%`,
+                animationDelay: `${(i % 10) * 0.08}s`,
+                animationDuration: `${1.8 + (i % 8) * 0.2}s`,
+                '--drift': `${((i * 17) % 160) - 80}px`,
+                '--spin': `${360 + (i % 5) * 360}deg`,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       <header className="header">
         <div>
           <p className="subtitle">廣東話朗讀練習</p>
           <h1>識字大冒險</h1>
         </div>
+
         <div className="star-count" aria-label={`已獲得 ${stars} 顆星星`}>
           ⭐ {stars}
         </div>
@@ -238,11 +247,11 @@ function speakFeedback(text) {
           </button>
 
           <button
-            className="record-button"
-            onClick={startRecording}
-            disabled={listening || !supported}
+            className={`record-button ${listening ? 'recording' : ''}`}
+            onClick={stopRecording}
+            disabled={!supported || !listening}
           >
-            {listening ? '🎙️ 正在聆聽…' : '🎙️ 開始錄音'}
+            ⏹️ 停止錄音
           </button>
         </div>
 

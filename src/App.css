@@ -281,3 +281,34 @@ footer {
     opacity: 0;
   }
 }
+
+
+.record-button {
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 18px 32px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.record-button:hover {
+  background: #c62828;
+}
+
+.record-button.recording {
+  background: #b71c1c;
+  animation: recording-pulse 1s infinite;
+}
+
+@keyframes recording-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(229, 57, 53, 0);
+  }
+}
