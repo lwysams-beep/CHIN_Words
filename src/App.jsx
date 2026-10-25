@@ -27,6 +27,7 @@ export default function App() {
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(true);
   const [result, setResult] = useState('');
+  const [celebrate, setCelebrate] = useState(false);
   const recognitionRef = useRef(null);
   const awardedRef = useRef(new Set());
 
@@ -54,35 +55,44 @@ export default function App() {
       setMessage('正在聆聽，請清楚讀出詞語……');
     };
 
-    recognition.onresult = (event) => {
-      const alternatives = Array.from(event.results[0])
-        .map((item) => cleanText(item.transcript));
+    
+recognition.onresult = (event) => {
+  const alternatives = Array.from(event.results[0])
+    .map((item) => cleanText(item.transcript));
 
-      const answer = alternatives[0] || '';
-      setRecognized(event.results[0][0].transcript);
+  const answer = alternatives[0] || '';
+  setRecognized(event.results[0][0].transcript);
 
-      const matched = alternatives.some(
-        (text) => text === cleanText(currentWord)
-      );
+  const matched = alternatives.some(
+    (text) => text === cleanText(currentWord)
+  );
 
-      if (matched) {
-        setResult('correct');
-        setMessage('讀對了！你真棒！');
-        const key = `${index}`;
+  if (matched) {
+    setResult('correct');
+    setMessage('🎉 答啱喇！正確！啱咗！');
+    setCelebrate(true);
 
-        if (!awardedRef.current.has(key)) {
-          awardedRef.current.add(key);
-          setStars((value) => value + 1);
-        }
-      } else {
-        setResult('retry');
-        setMessage(
-          answer
-            ? '再試一次！先聽清楚讀音，再慢慢讀。'
-            : '未能辨識，請再試一次。'
-        );
-      }
-    };
+    window.setTimeout(() => {
+      setCelebrate(false);
+    }, 3000);
+
+    speakFeedback('答啱喇！正確！啱咗！');
+
+    const key = `${index}`;
+
+    if (!awardedRef.current.has(key)) {
+      awardedRef.current.add(key);
+      setStars((value) => value + 1);
+    }
+  } else {
+    setResult('retry');
+    setMessage('唔緊要！再試多次，你一定得！');
+    setCelebrate(false);
+
+    speakFeedback('錯咗但唔緊要，再試多次！');
+  }
+};
+
 
     recognition.onerror = (event) => {
       if (event.error === 'not-allowed') {
@@ -105,6 +115,31 @@ export default function App() {
       recognitionRef.current = null;
     };
   }, [currentWord, index]);
+
+  
+function speakFeedback(text) {
+  if (!('speechSynthesis' in window)) return;
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'zh-HK';
+  utterance.rate = 0.9;
+  utterance.pitch = 1.15;
+
+  const voices = window.speechSynthesis.getVoices();
+  const cantoneseVoice = voices.find(
+    (voice) => voice.lang.toLowerCase() === 'zh-hk'
+  );
+
+  if (cantoneseVoice) {
+    utterance.voice = cantoneseVoice;
+  }
+
+  window.speechSynthesis.speak(utterance);
+}
+
+
 
   function speakWord() {
     if (!('speechSynthesis' in window)) {
@@ -157,6 +192,25 @@ export default function App() {
 
   return (
     <main className="app">
+      
+{celebrate && (
+  <div className="confetti-layer" aria-hidden="true">
+    {Array.from({ length: 70 }, (_, i) => (
+      <span
+        className="confetti"
+        key={i}
+        style={{
+          left: `${(i * 37) % 100}%`,
+          animationDelay: `${(i % 10) * 0.08}s`,
+          animationDuration: `${1.8 + (i % 8) * 0.2}s`,
+          '--drift': `${((i * 17) % 160) - 80}px`,
+          '--spin': `${360 + (i % 5) * 360}deg`,
+        }}
+      />
+    ))}
+  </div>
+)}
+
       <header className="header">
         <div>
           <p className="subtitle">廣東話朗讀練習</p>

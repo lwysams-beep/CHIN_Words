@@ -217,3 +217,67 @@ footer {
     font-size: 20px;
   }
 }
+
+
+.confetti-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti {
+  position: absolute;
+  top: -24px;
+  width: 12px;
+  height: 19px;
+  border-radius: 3px;
+  background: hsl(calc(var(--confetti-color, 0) * 1deg) 90% 60%);
+  animation-name: confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+.confetti:nth-child(6n + 1) {
+  --confetti-color: 0;
+  background: #ff5d73;
+}
+
+.confetti:nth-child(6n + 2) {
+  --confetti-color: 48;
+  background: #ffd447;
+}
+
+.confetti:nth-child(6n + 3) {
+  --confetti-color: 130;
+  background: #48c98b;
+}
+
+.confetti:nth-child(6n + 4) {
+  --confetti-color: 200;
+  background: #4da6ff;
+}
+
+.confetti:nth-child(6n + 5) {
+  --confetti-color: 275;
+  background: #b783ff;
+}
+
+.confetti:nth-child(6n) {
+  --confetti-color: 320;
+  background: #ff8bd1;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -20px, 0) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate3d(var(--drift), 105vh, 0)
+      rotate(var(--spin));
+    opacity: 0;
+  }
+}
