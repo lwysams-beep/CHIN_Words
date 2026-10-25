@@ -27,7 +27,6 @@ const words = [
   '願意',
   '答應',
   '自由',
-  '戴',
   '摔倒',
   '好心',
   '可怕',
@@ -447,7 +446,6 @@ function replayWord() {
       ) : (
         <div className="game-layout">
           <section className="reading-card">
-            <p className="instruction">請讀出以下詞語</p>
 
             <div className="word" key={currentWord}>
               {currentWord}
