@@ -242,11 +242,21 @@ shouldAdvanceRef.current = false;
     window.speechSynthesis.speak(utterance);
   }
 
-  function stopRecording() {
-    if (listening && recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
+  
+function stopRecording() {
+  const recognition = recognitionRef.current;
+
+  if (!recognition || !listening) return;
+
+  setMessage('正在辨識你的讀音，請稍候……');
+
+  try {
+    recognition.stop();
+  } catch (error) {
+    setMessage('停止錄音時出現問題，請再試一次。');
   }
+}
+
 
   function nextWord() {
     recognitionRef.current?.abort();
