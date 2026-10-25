@@ -13,6 +13,32 @@ const words = [
   '照料',
   '盼望',
   '翠綠',
+  '健康',
+  '成長',
+  '廣闊',
+  '奔跑',
+  '後悔',
+  '自私',
+  '如果',
+  '容氣',
+  '趕走',
+  '命令',
+  '理會',
+  '願意',
+  '答應',
+  '自由',
+  '戴',
+  '摔倒',
+  '好心',
+  '可怕',
+  '表演',
+  '慌忙',
+  '逃走',
+  '急忙',
+  '扶',
+  '受傷',
+  '充滿',
+  '掌聲',
 ];
 
 const praises = ['答啱喇！', '正確！', '啱咗！'];
@@ -33,6 +59,10 @@ export default function App() {
 
   const recognitionRef = useRef(null);
   const awardedRef = useRef(new Set());
+  const retryTimerRef = useRef(null);
+  const nextTimerRef = useRef(null);
+  const shouldRetryRef = useRef(false);
+  const shouldAdvanceRef = useRef(false);
 
   const currentWord = words[index];
 
@@ -86,6 +116,13 @@ export default function App() {
 
         const key = `${index}`;
 
+        shouldRetryRef.current = false;
+        shouldAdvanceRef.current = true;
+
+        nextTimerRef.current = window.setTimeout(() => {
+          setIndex((value) => (value + 1) % words.length);
+        }, 1800);
+
         if (!awardedRef.current.has(key)) {
           awardedRef.current.add(key);
           setStars((value) => value + 1);
@@ -96,6 +133,8 @@ export default function App() {
         setCelebrate(false);
 
         speakFeedback('錯咗但唔緊要，再試多次！');
+        shouldAdvanceRef.current = false;
+        shouldRetryRef.current = true;
       }
     };
 
@@ -111,6 +150,24 @@ export default function App() {
 
     recognition.onend = () => {
       setListening(false);
+    
+      if (shouldAdvanceRef.current) {
+        shouldAdvanceRef.current = false;
+        return;
+      }
+    
+      if (shouldRetryRef.current) {
+        shouldRetryRef.current = false;
+    
+        retryTimerRef.current = window.setTimeout(() => {
+          try {
+            recognition.start();
+          } catch {
+            setMessage('請稍候，再重新開始錄音。');
+            shouldRetryRef.current = true;
+          }
+        }, 800);
+      }
     };
 
     recognitionRef.current = recognition;
@@ -125,6 +182,11 @@ export default function App() {
     }, 400);
 
     return () => {
+      window.clearTimeout(retryTimerRef.current);
+window.clearTimeout(nextTimerRef.current);
+
+shouldRetryRef.current = false;
+shouldAdvanceRef.current = false;
       window.clearTimeout(autoStartTimer);
       recognition.abort();
 
@@ -272,9 +334,7 @@ export default function App() {
           </div>
         )}
 
-        <button className="next-button" onClick={nextWord}>
-          下一個詞語 →
-        </button>
+
       </section>
 
       <footer>
