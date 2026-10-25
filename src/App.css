@@ -195,3 +195,35 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* 美化「重聽讀音」按鈕 */
+.listen-button {
+  background: linear-gradient(135deg, #4f8cff, #3478f6);
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 24px;
+  font-size: 19px;
+  font-weight: 700;
+  box-shadow: 0 4px 0 #245ac2;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.listen-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #245ac2;
+}
+
+.listen-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #245ac2;
+}
+
+.listen-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
