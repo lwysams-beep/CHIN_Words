@@ -41,6 +41,21 @@ const words = [
   '掌聲',
 ];
 
+
+function shuffleArray(array) {
+  const result = [...array];
+
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+
+  return result;
+}
+
+const shuffledWords = shuffleArray(words);
+
+
 const praises = ['答啱喇！', '正確！', '啱咗！'];
 
 function cleanText(text) {
@@ -64,6 +79,7 @@ export default function App() {
   const recognitionRef = useRef(null);
   const indexRef = useRef(0);
   const startedRef = useRef(false);
+  const replayRequestedRef = useRef(false);
   const pausedRef = useRef(false);
   const outcomeRef = useRef('');
   const feedbackRef = useRef('');
@@ -71,7 +87,7 @@ export default function App() {
   const timerRef = useRef(null);
   const celebrationTimerRef = useRef(null);
 
-  const currentWord = words[index];
+  const currentWord = shuffledWords[index];
   const maxCount = Math.max(correctCount, wrongCount, 1);
 
   useEffect(() => {
@@ -196,7 +212,7 @@ export default function App() {
         (item) => cleanText(item.transcript)
       );
 
-      const target = cleanText(words[indexRef.current]);
+      const target = cleanText(shuffledWords[indexRef.current]);
       const matched = alternatives.some((text) => text === target);
 
       setRecognized(event.results[0][0].transcript);
@@ -252,6 +268,17 @@ export default function App() {
 
     recognition.onend = () => {
       setListening(false);
+      
+if (replayRequestedRef.current) {
+  replayRequestedRef.current = false;
+
+  if (!pausedRef.current && startedRef.current) {
+    speakWordAndRecord(shuffledWords[indexRef.current]);
+  }
+
+  return;
+}
+
 
       const outcome = outcomeRef.current;
       outcomeRef.current = '';
@@ -261,18 +288,27 @@ export default function App() {
       if (outcome === 'permission-error') return;
 
       
-if (outcome === 'correct') {
-  speakFeedback(feedbackRef.current, () => {
-    if (pausedRef.current) return;
 
-    const nextIndex = (indexRef.current + 1) % words.length;
-    indexRef.current = nextIndex;
-    setIndex(nextIndex);
-    setRecognized('');
-    setResult('');
-    setMessage('請按「重聽讀音」聆聽新詞語。');
-  });
-}
+      if (outcome === 'correct') {
+        speakFeedback(feedbackRef.current, () => {
+          if (pausedRef.current) return;
+      
+          const nextIndex = (indexRef.current + 1) % shuffledWords.length;
+      
+          indexRef.current = nextIndex;
+          setIndex(nextIndex);
+          setRecognized('');
+          setResult('');
+          setMessage('🔴 正在準備錄音……');
+      
+          timerRef.current = window.setTimeout(() => {
+            if (!pausedRef.current) {
+              startRecording();
+            }
+          }, 200);
+        });
+      }
+      
 
       
       else if (outcome === 'wrong' || outcome === 'retry') {
@@ -299,18 +335,22 @@ if (outcome === 'correct') {
     };
   }, []);
 
-  function beginGame() {
-    if (!supported) return;
+  
+function beginGame() {
+  if (!supported) return;
 
-    startedRef.current = true;
-    pausedRef.current = false;
-    setStarted(true);
-    setPaused(false);
+  startedRef.current = true;
+  pausedRef.current = false;
+  setStarted(true);
+  setPaused(false);
+  setMessage('🔴 正在準備錄音……');
 
-    speakWordAndRecord(words[indexRef.current]);
-  }
+  startRecording();
+}
+
 
   
+
 function replayWord() {
   if (!startedRef.current || pausedRef.current) return;
 
@@ -320,37 +360,22 @@ function replayWord() {
 
   const recognition = recognitionRef.current;
 
-  function playCurrentWord() {
-    if (pausedRef.current || !startedRef.current) return;
+  if (listening && recognition) {
+    replayRequestedRef.current = true;
 
-    setMessage('準備播放詞語……');
-
-    timerRef.current = window.setTimeout(() => {
-      if (pausedRef.current || !startedRef.current) return;
-
-      speakWordAndRecord(words[indexRef.current]);
-    }, 250);
-  }
-
-  if (recognition && listening) {
     try {
       recognition.stop();
-
       setMessage('準備重聽詞語……');
-
-      // 等待錄音真正停止，再播放讀音
-      recognition.onend = () => {
-        setListening(false);
-        playCurrentWord();
-      };
     } catch {
+      replayRequestedRef.current = false;
       setListening(false);
-      playCurrentWord();
+      speakWordAndRecord(shuffledWords[indexRef.current]);
     }
   } else {
-    playCurrentWord();
+    speakWordAndRecord(shuffledWords[indexRef.current]);
   }
 }
+
 
 
   function togglePause() {
