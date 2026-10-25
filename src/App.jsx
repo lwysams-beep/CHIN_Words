@@ -399,23 +399,34 @@ function replayWord() {
 
   return (
     <main className="app">
-      {celebrate && (
-        <div className="confetti-layer" aria-hidden="true">
-          {Array.from({ length: 70 }, (_, i) => (
-            <span
-              className="confetti"
-              key={i}
-              style={{
-                left: `${(i * 37) % 100}%`,
-                animationDelay: `${(i % 10) * 0.08}s`,
-                animationDuration: `${1.8 + (i % 8) * 0.2}s`,
-                '--drift': `${((i * 17) % 160) - 80}px`,
-                '--spin': `${360 + (i % 5) * 360}deg`,
-              }}
-            />
-          ))}
-        </div>
-      )}
+      
+{celebrate && (
+  <div className="fireworks-layer" aria-hidden="true">
+    {[20, 50, 80].map((position, burstIndex) => (
+      <div
+        className="firework-burst"
+        key={burstIndex}
+        style={{
+          left: `${position}%`,
+          top: `${30 + (burstIndex % 2) * 15}%`,
+        }}
+      >
+        {Array.from({ length: 24 }, (_, i) => (
+          <span
+            className="firework-particle"
+            key={i}
+            style={{
+              "--angle": `${i * 15}deg`,
+              "--hue": `${(i * 37 + burstIndex * 80) % 360}`,
+              animationDelay: `${burstIndex * 0.18}s`,
+            }}
+          />
+        ))}
+      </div>
+    ))}
+  </div>
+)}
+
 
       <header className="header">
         <div>

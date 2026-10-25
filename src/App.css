@@ -227,3 +227,46 @@
   transform: none;
   box-shadow: none;
 }
+
+
+/* 🎆 煙花效果 */
+.fireworks-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.firework-burst {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+}
+
+.firework-particle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: hsl(var(--hue), 100%, 60%);
+  box-shadow: 0 0 10px hsl(var(--hue), 100%, 65%);
+  opacity: 0;
+  animation: firework-explode 1.1s ease-out forwards;
+}
+
+@keyframes firework-explode {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--angle)) translateY(0) scale(0.4);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(-105px) scale(1);
+  }
+}
